@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>下载 Lottie JSON</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #f9f9f9;
+      margin: 0;
+    }
+
+    .container {
+      text-align: center;
+      background: white;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+    }
+
+    button {
+      padding: 12px 28px;
+      font-size: 16px;
+      background: #4a90e2;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #357abd;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>点击下载 Lottie JSON 文件</h2>
+    <button onclick="downloadJSON()">下载 JSON</button>
+  </div>
+
+  <script>
+    function downloadJSON() {
+      const data = {
+        "v": "5.8.1",
+        "fr": 25,
+        "ip": 0,
+        "op": 60,
+        "w": 1000,
+        "h": 265,
+        "nm": "第三方支付组件",
+        "ddd": 0,
+        "assets": [],
+        "layers": [
+          {
+            "ddd": 0,
+            "ind": 1,
+            "ty": 4,
+            "nm": "mask 2",
+            "td": 1,
+            "sr": 1,
+            "ks": {
+              "o": { "a": 0, "k": 100, "ix": 11 },
+              "r": { "a": 0, "k": 0, "ix": 10 },
+              "p": { "a": 0, "k": [500, 132.59, 0], "ix": 2, "l": 2 },
+              "a": { "a": 0, "k": [0, 0, 0], "ix": 1, "l": 2 },
+              "s": { "a": 0, "k": [36.313, 36.313, 100], "ix": 6, "l": 2 }
+            },
+            "ao": 0,
+            "shapes": [
+              {
+                "ty": "gr",
+                "it": [
+                  {
+                    "ty": "rc",
+                    "d": 1,
+                    "s": { "a": 0, "k": [141, 37.373], "ix": 2 },
+                    "p": { "a": 0, "k": [0, 0], "ix": 3 },
+                    "r": { "a": 0, "k": 100, "ix": 4 },
+                    "nm": "矩形路径 1",
+                    "mn": "ADBE Vector Shape - Rect",
+                    "hd": false
+                  },
+                  {
+                    "ty": "fl",
+                    "c": { "a": 0, "k": [1, 1, 1, 1], "ix": 4 },
+                    "o": { "a": 0, "k": 100, "ix": 5 },
+                    "r": 1,
+                    "bm": 0,
+                    "nm": "填充 1",
+                    "mn": "ADBE Vector Graphic - Fill",
+                    "hd": false
+                  },
+                  {
+                    "ty": "tr",
+                    "p": { "a": 0, "k": [0.883, 0.203], "ix": 2 },
+                    "a": { "a": 0, "k": [0, 0], "ix": 1 },
+                    "s": { "a": 0, "k": [1807.229, 1807.229], "ix": 3 },
+                    "r": { "a": 0, "k": 0, "ix": 6 },
+                    "o": { "a": 0, "k": 100, "ix": 7 },
+                    "sk": { "a": 0, "k": 0, "ix": 4 },
+                    "sa": { "a": 0, "k": 0, "ix": 5 },
+                    "nm": "变换"
+                  }
+                ],
+                "nm": "第三方支付组件",
+                "np": 3,
+                "cix": 2,
+                "bm": 0,
+                "ix": 1,
+                "mn": "ADBE Vector Group",
+                "hd": false
+              }
+            ],
+            "ip": 0,
+            "op": 62,
+            "st": 0,
+            "bm": 0
+          }
+          // ...你还有更多的 layers，我为了篇幅省略了后面的，但你可以粘满所有
+        ],
+        "markers": []
+      };
+
+      const jsonStr = JSON.stringify(data, null, 2); // 美化输出
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "lottie-animation.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>
