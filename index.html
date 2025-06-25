@@ -1,28 +1,44 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-  <meta charset="UTF-8">
-  <title>下载 Lottie JSON</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background: #f9f9f9;
-      margin: 0;
-    }
+<meta charset="UTF-8" />
+<title>同步上传下载JSON弹窗示例</title>
+<style>
+  /* 纯黑背景 */
+  body, html {
+    margin:0; padding:0; height:100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    background: #000;
+    color: white;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
 
-    .container {
-      text-align: center;
-      background: white;
-      padding: 40px;
-      border-radius: 20px;
-      box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
-    }
+  h2 {
+    margin-bottom: 20px;
+    text-shadow: 0 0 8px rgba(0,0,0,0.7);
+  }
 
-    button {
+  /* 主界面4个下载按钮 */
+  #mainDownloadGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 280px);
+    grid-template-rows: repeat(2, 56px);
+    gap: 20px 30px;
+    margin-bottom: 40px;
+    user-select: none;
+  }
+  button.download-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 280px;
+    height: 56px;
     padding: 14px 32px;
     font-size: 16px;
     font-weight: bold;
@@ -30,176 +46,519 @@
     background: linear-gradient(135deg, #6C63FF, #48C6EF);
     border: none;
     border-radius: 12px;
-    box-shadow: 0 6px 20px rgba(108, 99, 255, 0.3);
+    box-shadow: 0 6px 20px rgba(108, 99, 255, 0.5);
     cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
     overflow: hidden;
+    transition: all 0.3s ease;
   }
-
-  button::after {
+  button.download-btn::after {
     content: "";
     position: absolute;
-    top: 0;
-    left: -120%;
-    width: 100%;
+    top: 0; left: -100%;
+    width: 50%;
     height: 100%;
     background: rgba(255, 255, 255, 0.3);
     transform: skewX(-20deg);
+    opacity: 0;
     transition: all 0.5s ease;
+    pointer-events: none;
+    filter: drop-shadow(0 0 8px rgba(255,255,255,0.6));
+    z-index: 1;
   }
-
-  button:hover::after {
+  button.download-btn:hover:not(:disabled)::after {
     left: 200%;
+    opacity: 1;
+    transition: left 0.7s ease;
   }
-
-  button:hover {
-    box-shadow: 0 8px 30px rgba(108, 99, 255, 0.45);
+  button.download-btn:hover:not(:disabled) {
+    box-shadow: 0 8px 30px rgba(108, 99, 255, 0.7);
     transform: translateY(-2px);
   }
-
-  button:active {
-    transform: scale(0.98);
-    box-shadow: 0 4px 15px rgba(108, 99, 255, 0.2);
+  button.download-btn:disabled {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 0 10px rgba(255,255,255,0.1);
+    color: #ddd;
+    cursor: not-allowed;
+    border: 1px solid rgba(255, 255, 255, 0.2);
   }
-  </style>
+
+  /* 上传按钮 - 主页面 */
+  #uploadIconBtn {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #48C6EF, #6C63FF);
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(72, 198, 239, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 60px;
+    transition: background 0.3s ease;
+    user-select: none;
+    z-index: 2;
+  }
+  #uploadIconBtn:hover {
+    background: linear-gradient(135deg, #6C63FF, #48C6EF);
+  }
+  #uploadIconBtn svg {
+    width: 28px;
+    height: 28px;
+    fill: white;
+  }
+
+  /* 上传弹窗 */
+  #uploadModal {
+    position: fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.8);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+  }
+  #uploadModal.active {
+    display: flex;
+  }
+  #uploadModal .modal-content {
+    background: rgba(30,30,30,0.95);
+    padding: 30px 40px;
+    border-radius: 16px;
+    width: 720px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 0 20px rgba(108, 99, 255, 0.8);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    position: relative;
+  }
+  #uploadModal .close-btn {
+    background: transparent;
+    color: #aaa;
+    font-size: 28px;
+    font-weight: normal;
+    position: absolute;
+    top: 10px; right: 20px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  /* 密码验证区 */
+  #passwordArea {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  #passwordArea input[type="password"] {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+    outline: none;
+    background: #222;
+    color: white;
+  }
+  #passwordArea button {
+    padding: 12px 0;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #6C63FF, #48C6EF);
+    border: none;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.3s ease;
+  }
+  #passwordArea button:hover {
+    background: linear-gradient(135deg, #48C6EF, #6C63FF);
+  }
+
+  /* 上传区 */
+  #uploadArea {
+    display: none;
+  }
+  #uploadArea .upload-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  #uploadArea label {
+    flex-shrink: 0;
+    width: 100px;
+    font-weight: bold;
+  }
+  #uploadArea input[type="file"] {
+    flex-grow: 1;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: none;
+    background: #222;
+    color: white;
+  }
+  #uploadArea input[type="text"] {
+    width: 160px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: none;
+    background: #222;
+    color: white;
+  }
+  #uploadArea button.upload-btn {
+    padding: 8px 14px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #6C63FF, #48C6EF);
+    border: none;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+    user-select: none;
+    min-width: 70px;
+    transition: background 0.3s ease;
+  }
+  #uploadArea button.upload-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  #uploadArea button.upload-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #48C6EF, #6C63FF);
+  }
+
+  /* 弹窗内下载和删除按钮组 */
+  #downloadModalGrid {
+    margin-top: 30px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px 25px;
+  }
+  #downloadModalGrid .download-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  #downloadModalGrid button.download-btn {
+    flex-grow: 1;
+    height: 40px;
+    font-size: 14px;
+    padding: 6px 18px;
+  }
+  #downloadModalGrid button.delete-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 20px;
+    color: #ff4c4c;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+  }
+  #downloadModalGrid button.delete-btn:disabled {
+    cursor: not-allowed;
+    color: #ff4c4caa;
+    pointer-events: none;
+  }
+  #downloadModalGrid button.delete-btn:hover:not(:disabled) {
+    transform: scale(1.3);
+    color: #ff0000;
+  }
+</style>
 </head>
 <body>
-  <div class="container">
-    <h2>优雅的点击下载 方案一paypal 文件</h2>
-    <button onclick="downloadJSON1()">我要下载~ </button>
-    <br><br>
-    <button onclick="downloadJSON2()">下载 JSON 2</button>
-  </div>
 
-  <script>
-    // 第一个 JSON 文件
-    function downloadJSON1() {
-      const data = {
-        "v": "5.8.1",
-        "fr": 25,
-        "ip": 0,
-        "op": 60,
-        "w": 1000,
-        "h": 265,
-        "nm": "第三方支付组件",
-        "ddd": 0,
-        "assets": [],
-        "layers": [
-          {
-            "ddd": 0,
-            "ind": 1,
-            "ty": 4,
-            "nm": "mask 2",
-            "td": 1,
-            "sr": 1,
-            "ks": {
-              "o": { "a": 0, "k": 100, "ix": 11 },
-              "r": { "a": 0, "k": 0, "ix": 10 },
-              "p": { "a": 0, "k": [500, 132.59, 0], "ix": 2, "l": 2 },
-              "a": { "a": 0, "k": [0, 0, 0], "ix": 1, "l": 2 },
-              "s": { "a": 0, "k": [36.313, 36.313, 100], "ix": 6, "l": 2 }
-            },
-            "ao": 0,
-            "shapes": [
-              {
-                "ty": "gr",
-                "it": [
-                  {
-                    "ty": "rc",
-                    "d": 1,
-                    "s": { "a": 0, "k": [141, 37.373], "ix": 2 },
-                    "p": { "a": 0, "k": [0, 0], "ix": 3 },
-                    "r": { "a": 0, "k": 100, "ix": 4 },
-                    "nm": "矩形路径 1",
-                    "mn": "ADBE Vector Shape - Rect",
-                    "hd": false
-                  },
-                  {
-                    "ty": "fl",
-                    "c": { "a": 0, "k": [1, 1, 1, 1], "ix": 4 },
-                    "o": { "a": 0, "k": 100, "ix": 5 },
-                    "r": 1,
-                    "bm": 0,
-                    "nm": "填充 1",
-                    "mn": "ADBE Vector Graphic - Fill",
-                    "hd": false
-                  },
-                  {
-                    "ty": "tr",
-                    "p": { "a": 0, "k": [0.883, 0.203], "ix": 2 },
-                    "a": { "a": 0, "k": [0, 0], "ix": 1 },
-                    "s": { "a": 0, "k": [1807.229, 1807.229], "ix": 3 },
-                    "r": { "a": 0, "k": 0, "ix": 6 },
-                    "o": { "a": 0, "k": 100, "ix": 7 },
-                    "sk": { "a": 0, "k": 0, "ix": 4 },
-                    "sa": { "a": 0, "k": 0, "ix": 5 },
-                    "nm": "变换"
-                  }
-                ],
-                "nm": "第三方支付组件",
-                "np": 3,
-                "cix": 2,
-                "bm": 0,
-                "ix": 1,
-                "mn": "ADBE Vector Group",
-                "hd": false
-              }
-            ],
-            "ip": 0,
-            "op": 62,
-            "st": 0,
-            "bm": 0
-          }
-          // ...你还有更多的 layers，我为了篇幅省略了后面的，但你可以粘满所有
-        ],
-        "markers": []
+<h2>😀 😃 😄 😁 😆 🥹 请下载~</h2>
+
+<!-- 主界面下载按钮 -->
+<div id="mainDownloadGrid" aria-label="主界面下载按钮列表">
+  <!-- 4个按钮通过JS渲染 -->
+</div>
+
+<!-- 主界面上传按钮 -->
+<button id="uploadIconBtn" aria-label="上传 JSON 文件（需密码验证）" title="上传 JSON 文件（需密码验证）" onclick="openUploadModal()">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 5v14M5 12h14" />
+  </svg>
+</button>
+
+<!-- 上传弹窗 -->
+<div id="uploadModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalDesc" tabindex="-1">
+  <div class="modal-content">
+    <button class="close-btn" aria-label="关闭弹窗" onclick="closeUploadModal()">&times;</button>
+
+    <!-- 密码验证区 -->
+    <div id="passwordArea" aria-live="polite" aria-atomic="true">
+      <h3 id="modalTitle">请输入密码验证</h3>
+      <input type="password" id="modalPassword" placeholder="请输入密码" aria-label="密码输入框" autocomplete="current-password" />
+      <button id="verifyBtn" onclick="verifyPassword()">验证</button>
+    </div>
+
+    <!-- 上传区域（密码正确后显示） -->
+    <div id="uploadArea" style="display:none;">
+
+      <!-- 4个上传行，每行包括：选择文件，修改文件名，上传按钮 -->
+      <div class="upload-row" id="uploadRow1">
+        <label for="fileInput1">代码位 1</label>
+        <input type="file" id="fileInput1" accept=".json" aria-label="上传槽位1的JSON文件" />
+        <input type="text" id="fileNameInput1" placeholder="修改文件名" aria-label="修改槽位1的文件名" />
+        <button class="upload-btn" id="uploadBtn1" disabled onclick="handleUpload(1)">上传</button>
+      </div>
+      <div class="upload-row" id="uploadRow2">
+        <label for="fileInput2">代码位 2</label>
+        <input type="file" id="fileInput2" accept=".json" aria-label="上传槽位2的JSON文件" />
+        <input type="text" id="fileNameInput2" placeholder="修改文件名" aria-label="修改槽位2的文件名" />
+        <button class="upload-btn" id="uploadBtn2" disabled onclick="handleUpload(2)">上传</button>
+      </div>
+      <div class="upload-row" id="uploadRow3">
+        <label for="fileInput3">代码位 3</label>
+        <input type="file" id="fileInput3" accept=".json" aria-label="上传槽位3的JSON文件" />
+        <input type="text" id="fileNameInput3" placeholder="修改文件名" aria-label="修改槽位3的文件名" />
+        <button class="upload-btn" id="uploadBtn3" disabled onclick="handleUpload(3)">上传</button>
+      </div>
+      <div class="upload-row" id="uploadRow4">
+        <label for="fileInput4">代码位 4</label>
+        <input type="file" id="fileInput4" accept=".json" aria-label="上传槽位4的JSON文件" />
+        <input type="text" id="fileNameInput4" placeholder="修改文件名" aria-label="修改槽位4的文件名" />
+        <button class="upload-btn" id="uploadBtn4" disabled onclick="handleUpload(4)">上传</button>
+      </div>
+
+      <!-- 弹窗内对应的下载与删除按钮 -->
+      <div id="downloadModalGrid" aria-label="弹窗内下载与删除按钮">
+        <!-- 4个按钮组由JS渲染 -->
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  const PASSWORD = "zr12"; // 密码可修改
+  let authenticated = false;
+
+  // 数据槽位，存json数据和文件名
+  let jsonFiles = {
+    1: null,
+    2: null,
+    3: null,
+    4: null
+  };
+
+  // --- 工具函数 ---
+  const el = id => document.getElementById(id);
+
+  // 创建主界面4个下载按钮（渲染或更新）
+  function renderMainDownloadButtons() {
+    const container = el('mainDownloadGrid');
+    container.innerHTML = '';
+    for(let i=1; i<=4; i++){
+      const file = jsonFiles[i];
+      const btn = document.createElement('button');
+      btn.className = 'download-btn';
+      btn.id = 'mainBtn' + i;
+      if(file && file.data){
+        btn.disabled = false;
+        btn.setAttribute('aria-label', `下载 ${file.fileName}`);
+        btn.innerHTML = `<span>${file.fileName}</span>`;
+        btn.onclick = () => downloadJSON(i);
+      } else {
+        btn.disabled = true;
+        btn.setAttribute('aria-label', '无 JSON 文件');
+        btn.textContent = '无 JSON 文件';
+      }
+      container.appendChild(btn);
+    }
+  }
+
+  // 渲染弹窗内上传区文件名和上传按钮状态
+  function renderUploadInputs() {
+    for(let i=1; i<=4; i++){
+      const fileInput = el('fileInput' + i);
+      const fileNameInput = el('fileNameInput' + i);
+      const uploadBtn = el('uploadBtn' + i);
+
+      const file = jsonFiles[i];
+      if(file && file.fileName){
+        fileNameInput.value = file.fileName;
+      } else {
+        fileNameInput.value = '';
+      }
+
+      fileInput.value = '';
+      uploadBtn.disabled = true;
+    }
+  }
+
+  // 渲染弹窗内下载和删除按钮
+  function renderModalDownloadDeleteButtons() {
+    const container = el('downloadModalGrid');
+    container.innerHTML = '';
+    for(let i=1; i<=4; i++){
+      const file = jsonFiles[i];
+      const row = document.createElement('div');
+      row.className = 'download-row';
+
+      // 下载按钮
+      const downloadBtn = document.createElement('button');
+      downloadBtn.className = 'download-btn';
+      downloadBtn.style.height = '40px';
+      if(file && file.data){
+        downloadBtn.disabled = false;
+        downloadBtn.setAttribute('aria-label', `下载 ${file.fileName}`);
+        downloadBtn.textContent = file.fileName;
+        downloadBtn.onclick = () => downloadJSON(i);
+      } else {
+        downloadBtn.disabled = true;
+        downloadBtn.setAttribute('aria-label', '无 JSON 文件');
+        downloadBtn.textContent = '无 JSON 文件';
+      }
+
+      // 删除按钮
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'delete-btn';
+      deleteBtn.setAttribute('aria-label', `删除槽位${i}文件`);
+      deleteBtn.textContent = '×';
+      // 只有认证通过且有文件时可用
+      deleteBtn.disabled = !(authenticated && file && file.data);
+      deleteBtn.onclick = () => {
+        if(confirm(`确定删除槽位${i}的文件吗？`)){
+          deleteJSON(i);
+        }
       };
 
-      const jsonStr = JSON.stringify(data, null, 2); // 美化输出
-      const blob = new Blob([jsonStr], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
+      row.appendChild(downloadBtn);
+      row.appendChild(deleteBtn);
+      container.appendChild(row);
+    }
+  }
 
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "方案A_PayPal扫光-animation.json";
-      a.click();
-      URL.revokeObjectURL(url);
+  // 当文件选择变化时，控制对应上传按钮的启用状态
+  function setupFileInputListeners() {
+    for(let i=1; i<=4; i++){
+      const fileInput = el('fileInput' + i);
+      const uploadBtn = el('uploadBtn' + i);
+      fileInput.addEventListener('change', () => {
+        uploadBtn.disabled = !fileInput.files.length;
+      });
+    }
+  }
+
+  // 打开弹窗
+  function openUploadModal() {
+    el('uploadModal').classList.add('active');
+    resetUploadModal();
+  }
+
+  // 关闭弹窗
+  function closeUploadModal() {
+    el('uploadModal').classList.remove('active');
+  }
+
+  // 重置弹窗内容及状态
+  function resetUploadModal() {
+    authenticated = false;
+    el('passwordArea').style.display = 'flex';
+    el('uploadArea').style.display = 'none';
+    el('modalPassword').value = '';
+    renderUploadInputs();
+    renderModalDownloadDeleteButtons();
+  }
+
+  // 验证密码
+  function verifyPassword() {
+    const pwd = el('modalPassword').value;
+    if(pwd === PASSWORD){
+      authenticated = true;
+      el('passwordArea').style.display = 'none';
+      el('uploadArea').style.display = 'block';
+      renderUploadInputs();
+      renderModalDownloadDeleteButtons();
+    } else {
+      alert('密码错误，请重试');
+    }
+  }
+
+  // 读取文件内容（promise）
+  function readFileAsync(file){
+    return new Promise((resolve,reject)=>{
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsText(file);
+    });
+  }
+
+  // 上传文件处理
+  async function handleUpload(slot) {
+    const fileInput = el('fileInput' + slot);
+    const fileNameInput = el('fileNameInput' + slot);
+
+    if(!fileInput.files.length){
+      alert('请选择文件');
+      return;
     }
 
-    function downloadJSON2() {
-    const data = {
-      "v": "5.7.4",
-      "nm": "确认支付成功",
-      "w": 800,
-      "h": 300,
-      "fr": 30,
-      "ip": 0,
-      "op": 60,
-      "layers": [
-        {
-          "nm": "success icon",
-          "ty": 4,
-          "ks": {
-            "o": { "a": 0, "k": 100 },
-            "r": { "a": 0, "k": 0 },
-            "p": { "a": 0, "k": [400, 150, 0] },
-            "s": { "a": 0, "k": [100, 100, 100] }
-          }
-        }
-      ]
-    };
+    const file = fileInput.files[0];
+    if(!file.name.endsWith('.json')){
+      alert('请选择 JSON 文件');
+      return;
+    }
 
-    const jsonStr = JSON.stringify(data, null, 2);
-    const blob = new Blob([jsonStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "lottie-animation-2.json";
-    a.click();
-    URL.revokeObjectURL(url);
+    try {
+      const content = await readFileAsync(file);
+      // 简单验证是否为JSON
+      JSON.parse(content);
+      // 更新数据槽
+      jsonFiles[slot] = {
+        fileName: fileNameInput.value.trim() || file.name,
+        data: content
+      };
+      alert(`槽位${slot}文件上传成功！`);
+      renderMainDownloadButtons();
+      renderModalDownloadDeleteButtons();
+      // 重置上传控件状态
+      fileInput.value = '';
+      el('uploadBtn' + slot).disabled = true;
+    } catch(e){
+      alert('文件内容不是有效的 JSON');
+    }
   }
-  </script>
+
+  // 下载对应槽位JSON文件
+  function downloadJSON(slot){
+    const file = jsonFiles[slot];
+    if(file && file.data){
+      const blob = new Blob([file.data], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file.fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } else {
+      alert('该槽位没有文件可下载');
+    }
+  }
+
+  // 删除对应槽位文件
+  function deleteJSON(slot){
+    jsonFiles[slot] = null;
+    renderMainDownloadButtons();
+    renderModalDownloadDeleteButtons();
+  }
+
+  // 监听上传文件控件变化，控制按钮启用
+  setupFileInputListeners();
+
+  // 页面初始化，渲染主界面按钮
+  renderMainDownloadButtons();
+
+</script>
+
 </body>
 </html>
