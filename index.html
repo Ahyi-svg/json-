@@ -68,10 +68,13 @@
   <div class="container">
     <h2>优雅的点击下载 方案一paypal 文件</h2>
     <button onclick="downloadJSON()">我要下载~ </button>
+    <br><br>
+    <button onclick="downloadJSON2()">下载 JSON 2</button>
   </div>
 
   <script>
-    function downloadJSON() {
+    // 第一个 JSON 文件
+    function downloadJSON1() {
       const data = {
         "v": "5.8.1",
         "fr": 25,
@@ -163,6 +166,40 @@
       a.click();
       URL.revokeObjectURL(url);
     }
+
+    function downloadJSON2() {
+    const data = {
+      "v": "5.7.4",
+      "nm": "确认支付成功",
+      "w": 800,
+      "h": 300,
+      "fr": 30,
+      "ip": 0,
+      "op": 60,
+      "layers": [
+        {
+          "nm": "success icon",
+          "ty": 4,
+          "ks": {
+            "o": { "a": 0, "k": 100 },
+            "r": { "a": 0, "k": 0 },
+            "p": { "a": 0, "k": [400, 150, 0] },
+            "s": { "a": 0, "k": [100, 100, 100] }
+          }
+        }
+      ]
+    };
+
+    const jsonStr = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "lottie-animation-2.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
   </script>
 </body>
 </html>
